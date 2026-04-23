@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Attendance Register 2026</title>
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  background: #0a0f1e;
+  color: #c8d6e5;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* SAVE INDICATOR */
+#save-flash {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity 0.15s ease;
+}
+#save-flash.visible {
+  opacity: 1;
+}
+
+/* HEADER */
+.page-header {
+  padding: 16px 12px 8px 12px;
+  text-align: center;
+}
+.page-header h1 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e2e8f0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.page-header .subtitle {
+  font-size: 10px;
+  color: #475569;
+  letter-spacing: 1px;
+}
+
+/* MONTH TABS */
+.month-tabs {
+  display: flex;
+  gap: 0;
+  padding: 8px 8px 0 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.month-tabs::-webkit-scrollbar {
+  display: none;
+}
+.month-tab {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  -webkit-appearance: none;
+  outline: none;
+}
+.month-tab:active {
+  color: #93c5fd;
+}
+.month-tab.active {
+  color: #93c5fd;
+  border-bottom-color: #93c5fd;
+}
+
+/* MONTH PANELS */
+.month-panel {
+  display: none;
+  padding: 10px 8px 24px 8px;
+}
+.month-panel.active {
+  display: block;
+}
+
+/* MEMBER CARD */
+.member-card {
+  background: #0d1526;
+  border: 1px solid #1a2744;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #111d33;
+}
+.member-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #e2e8f0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.totals {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+}
+.total-att {
+  color: #4ade80;
+}
+.total-paid {
+  color: #f59e0b;
+}
+
+/* WEEK GRID */
+.weeks-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  padding: 6px;
+}
+.week-col {
+  background: #060d1a;
+  border-radius: 4px;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.week-label {
+  font-size: 9px;
+  color: #334155;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+/* DAY ROW */
+.day-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.day-label {
+  font-size: 8px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.day-label-wed {
+  color: #93c5fd;
+}
+.day-label-fri {
+  color: #fcd34d;
+}
+
+/* TOGGLE BUTTONS */
+.tog {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #1a2744;
+  background: #080f1e;
+  color: #2a3a55;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  -webkit-appearance: none;
+  outline: none;
+  padding: 0;
+  line-height: 1;
+}
+.tog:active {
+  transform: scale(0.92);
+}
+
+/* Active states */
+.tog.att-on {
+  background: #4ade80;
+  color: #0a0f1e;
+  border-color: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.35);
+}
+.tog.paid-on {
+  background: #f59e0b;
+  color: #0a0f1e;
+  border-color: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.35);
+}
+
+/* NOSCRIPT */
+noscript {
+  display: block;
+  padding: 40px 20px;
+  text-align: center;
+  color: #ef4444;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div id="save-flash">&#9679; SAVED</div>
+
+<div class="page-header">
+  <h1>Attendance 2026</h1>
+  <div class="subtitle">WED &amp; FRI &middot; 5 WEEKS / MONTH</div>
+</div>
+
+<div id="month-tabs-container" class="month-tabs"></div>
+<div id="panels-container"></div>
+
+<noscript>
+  <p>JavaScript is required for this attendance register.</p>
+</noscript>
+
+<script>
+(function() {
+  "use strict";
+
+  var STORAGE_KEY = "att_reg_2026_v2";
+  var MEMBERS = ["Monty", "Josh", "Fynn", "Gilby", "Callum", "Beth"];
+  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var WEEKS = 5;
+  var DAYS = ["Wed", "Fri"];
+  var FIELDS = ["att", "paid"];
+
+  var saveTimer = null;
+  var state = {};
+
+  function initState() {
+    var s = {};
+    var mi, wi, di, fi, mem;
+    for (mi = 0; mi < MONTHS.length; mi++) {
+      for (mem = 0; mem < MEMBERS.length; mem++) {
+        for (wi = 0; wi < WEEKS; wi++) {
+          for (di = 0; di < DAYS.length; di++) {
+            for (fi = 0; fi < FIELDS.length; fi++) {
+              s[stateKey(mi, MEMBERS[mem], wi, di, fi)] = false;
+            }
+          }
+        }
+      }
+    }
+    return s;
+  }
+
+  function stateKey(monthIdx, memberName, weekIdx, dayIdx, fieldIdx) {
+    return monthIdx + "." + memberName + "." + weekIdx + "." + dayIdx + "." + fieldIdx;
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      showSaveFlash();
+    } catch (e) {}
+  }
+
+  function showSaveFlash() {
+    var el = document.getElementById("save-flash");
+    if (!el) return;
+    el.className = "visible";
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function() {
+      el.className = "";
+    }, 600);
+  }
+
+  function buildTabs() {
+    var container = document.getElementById("month-tabs-container");
+    if (!container) return;
+    var html = "";
+    var i;
+    for (i = 0; i < MONTHS.length; i++) {
+      html += '<button class="month-tab' + (i === 0 ? " active" : "") + '" data-month="' + i + '">' + MONTHS[i] + '<\/button>';
+    }
+    container.innerHTML = html;
+  }
+
+  function buildPanels() {
+    var container = document.getElementById("panels-container");
+    if (!container) return;
+    var html = "";
+    var mi, mem, wi, di;
+
+    for (mi = 0; mi < MONTHS.length; mi++) {
+      html += '<div class="month-panel' + (mi === 0 ? " active" : "") + '" data-month="' + mi + '">';
+
+      for (mem = 0; mem < MEMBERS.length; mem++) {
+        var memberName = MEMBERS[mem];
+        var attTotalId = "total-att-" + mi + "-" + mem;
+        var paidTotalId = "total-paid-" + mi + "-" + mem;
+
+        html += '<div class="member-card">';
+        html += '<div class="card-header">';
+        html += '<span class="member-name">' + memberName + '<\/span>';
+        html += '<div class="totals">';
+        html += '<span class="total-att" id="' + attTotalId + '">&#10003; 0/10<\/span>';
+        html += '<span class="total-paid" id="' + paidTotalId + '">&pound; 0/10<\/span>';
+        html += '<\/div>';
+        html += '<\/div>';
+
+        html += '<div class="weeks-grid">';
+        for (wi = 0; wi < WEEKS; wi++) {
+          html += '<div class="week-col">';
+          html += '<div class="week-label">W' + (wi + 1) + '<\/div>';
+
+          for (di = 0; di < DAYS.length; di++) {
+            var dayClass = di === 0 ? "day-label-wed" : "day-label-fri";
+            var attKey = stateKey(mi, memberName, wi, di, 0);
+            var paidKey = stateKey(mi, memberName, wi, di, 1);
+
+            html += '<div class="day-row">';
+            html += '<span class="day-label ' + dayClass + '">' + DAYS[di] + '<\/span>';
+            html += '<button class="tog" id="btn-' + paidKey + '" data-key="' + paidKey + '" data-type="paid" aria-label="Paid">&pound;<\/button>';
+            html += '<button class="tog" id="btn-' + attKey + '" data-key="' + attKey + '" data-type="att" aria-label="Attended">&#10003;<\/button>';
+            html += '<\/div>';
+          }
+
+          html += '<\/div>';
+        }
+        html += '<\/div>';
+
+        html += '<\/div>';
+      }
+
+      html += '<\/div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function applyStateToDOM() {
+    var key;
+    for (key in state) {
+      if (state.hasOwnProperty(key)) {
+        if (state[key]) {
+          var btn = document.getElementById("btn-" + key);
+          if (btn) {
+            var type = btn.getAttribute("data-type");
+            if (type === "att") {
+              btn.className = "tog att-on";
+            } else if (type === "paid") {
+              btn.className = "tog paid-on";
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function updateAllTotals() {
+    var mi, mem;
+    for (mi = 0; mi < MONTHS.length; mi++) {
+      for (mem = 0; mem < MEMBERS.length; mem++) {
+        updateTotals(mi, mem);
+      }
+    }
+  }
+
+  function updateTotals(monthIdx, memberIdx) {
+    var memberName = MEMBERS[memberIdx];
+    var attCount = 0;
+    var paidCount = 0;
+    var wi, di;
+
+    for (wi = 0; wi < WEEKS; wi++) {
+      for (di = 0; di < DAYS.length; di++) {
+        if (state[stateKey(monthIdx, memberName, wi, di, 0)]) {
+          attCount++;
+        }
+        if (state[stateKey(monthIdx, memberName, wi, di, 1)]) {
+          paidCount++;
+        }
+      }
+    }
+
+    var attEl = document.getElementById("total-att-" + monthIdx + "-" + memberIdx);
+    var paidEl = document.getElementById("total-paid-" + monthIdx + "-" + memberIdx);
+
+    if (attEl) {
+      attEl.innerHTML = "&#10003; " + attCount + "/10";
+    }
+    if (paidEl) {
+      paidEl.innerHTML = "&pound; " + paidCount + "/10";
+    }
+  }
+
+  function handleTabClick(e) {
+    var target = e.target;
+    if (!target || !target.classList.contains("month-tab")) return;
+
+    var monthIdx = target.getAttribute("data-month");
+
+    var allTabs = document.querySelectorAll(".month-tab");
+    var allPanels = document.querySelectorAll(".month-panel");
+    var i;
+
+    for (i = 0; i < allTabs.length; i++) {
+      allTabs[i].className = "month-tab";
+    }
+    target.className = "month-tab active";
+
+    for (i = 0; i < allPanels.length; i++) {
+      if (allPanels[i].getAttribute("data-month") === monthIdx) {
+        allPanels[i].className = "month-panel active";
+      } else {
+        allPanels[i].className = "month-panel";
+      }
+    }
+  }
+
+  function handleToggleClick(e) {
+    var target = e.target;
+    if (!target || !target.classList.contains("tog")) return;
+
+    var key = target.getAttribute("data-key");
+    var type = target.getAttribute("data-type");
+    if (!key || !type) return;
+
+    var isOn = !!state[key];
+    state[key] = !isOn;
+
+    if (!isOn) {
+      if (type === "att") {
+        target.className = "tog att-on";
+      } else {
+        target.className = "tog paid-on";
+      }
+    } else {
+      target.className = "tog";
+    }
+
+    var parts = key.split(".");
+    var monthIdx = parseInt(parts[0], 10);
+    var memberName = parts[1];
+    var memberIdx = -1;
+    var m;
+    for (m = 0; m < MEMBERS.length; m++) {
+      if (MEMBERS[m] === memberName) {
+        memberIdx = m;
+        break;
+      }
+    }
+    if (memberIdx >= 0) {
+      updateTotals(monthIdx, memberIdx);
+    }
+
+    saveState();
+  }
+
+  function init() {
+    state = initState();
+
+    var saved = loadState();
+    if (saved) {
+      var k;
+      for (k in saved) {
+        if (saved.hasOwnProperty(k) && state.hasOwnProperty(k)) {
+          state[k] = saved[k];
+        }
+      }
+    }
+
+    buildTabs();
+    buildPanels();
+    applyStateToDOM();
+    updateAllTotals();
+
+    var tabContainer = document.getElementById("month-tabs-container");
+    if (tabContainer) {
+      tabContainer.addEventListener("click", handleTabClick, false);
+    }
+
+    var panelsContainer = document.getElementById("panels-container");
+    if (panelsContainer) {
+      panelsContainer.addEventListener("click", handleToggleClick, false);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, false);
+  } else {
+    init();
+  }
+
+})();
+</script>
+
+</body>
+</html>
