@@ -13,7 +13,6 @@
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
-
 html, body {
   background: #0a0f1e;
   color: #c8d6e5;
@@ -24,8 +23,6 @@ html, body {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
-
-/* SAVE INDICATOR */
 #save-flash {
   position: fixed;
   top: 12px;
@@ -43,11 +40,7 @@ html, body {
   z-index: 9999;
   transition: opacity 0.15s ease;
 }
-#save-flash.visible {
-  opacity: 1;
-}
-
-/* HEADER */
+#save-flash.visible { opacity: 1; }
 .page-header {
   padding: 16px 12px 8px 12px;
   text-align: center;
@@ -65,8 +58,6 @@ html, body {
   color: #475569;
   letter-spacing: 1px;
 }
-
-/* MONTH TABS */
 .month-tabs {
   display: flex;
   gap: 0;
@@ -75,9 +66,7 @@ html, body {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.month-tabs::-webkit-scrollbar {
-  display: none;
-}
+.month-tabs::-webkit-scrollbar { display: none; }
 .month-tab {
   flex: 0 0 auto;
   padding: 8px 10px;
@@ -95,24 +84,16 @@ html, body {
   -webkit-appearance: none;
   outline: none;
 }
-.month-tab:active {
-  color: #93c5fd;
-}
+.month-tab:active { color: #93c5fd; }
 .month-tab.active {
   color: #93c5fd;
   border-bottom-color: #93c5fd;
 }
-
-/* MONTH PANELS */
 .month-panel {
   display: none;
   padding: 10px 8px 24px 8px;
 }
-.month-panel.active {
-  display: block;
-}
-
-/* MEMBER CARD */
+.month-panel.active { display: block; }
 .member-card {
   background: #0d1526;
   border: 1px solid #1a2744;
@@ -134,33 +115,43 @@ html, body {
   letter-spacing: 1px;
   text-transform: uppercase;
 }
+.member-days-tag {
+  font-size: 9px;
+  color: #64748b;
+  font-weight: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 6px;
+}
 .totals {
   display: flex;
   gap: 10px;
   font-size: 11px;
 }
-.total-att {
-  color: #4ade80;
+.total-att { color: #4ade80; }
+.total-paid { color: #f59e0b; }
+.weeks-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
-.total-paid {
-  color: #f59e0b;
-}
-
-/* WEEK GRID */
+.weeks-scroll::-webkit-scrollbar { display: none; }
 .weeks-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: inline-flex;
   gap: 2px;
   padding: 6px;
+  min-width: 100%;
 }
 .week-col {
   background: #060d1a;
   border-radius: 4px;
-  padding: 4px 2px;
+  padding: 4px 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-width: 74px;
+  flex: 1 1 0;
 }
 .week-label {
   font-size: 9px;
@@ -169,8 +160,6 @@ html, body {
   letter-spacing: 1px;
   margin-bottom: 2px;
 }
-
-/* DAY ROW */
 .day-row {
   display: flex;
   align-items: center;
@@ -180,18 +169,14 @@ html, body {
   font-size: 8px;
   font-weight: bold;
   letter-spacing: 0.5px;
-  width: 18px;
+  min-width: 22px;
   text-align: right;
   flex-shrink: 0;
 }
-.day-label-wed {
-  color: #93c5fd;
-}
-.day-label-fri {
-  color: #fcd34d;
-}
-
-/* TOGGLE BUTTONS */
+.day-label-wed { color: #93c5fd; }
+.day-label-fri { color: #fcd34d; }
+.day-label-tue { color: #c4b5fd; }
+.day-label-thu { color: #fdba74; }
 .tog {
   width: 24px;
   height: 24px;
@@ -212,11 +197,7 @@ html, body {
   padding: 0;
   line-height: 1;
 }
-.tog:active {
-  transform: scale(0.92);
-}
-
-/* Active states */
+.tog:active { transform: scale(0.92); }
 .tog.att-on {
   background: #4ade80;
   color: #0a0f1e;
@@ -229,8 +210,6 @@ html, body {
   border-color: #f59e0b;
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.35);
 }
-
-/* NOSCRIPT */
 noscript {
   display: block;
   padding: 40px 20px;
@@ -246,7 +225,7 @@ noscript {
 
 <div class="page-header">
   <h1>Attendance 2026</h1>
-  <div class="subtitle">WED &amp; FRI &middot; 5 WEEKS / MONTH</div>
+  <div class="subtitle">REAL CALENDAR &middot; PER-MEMBER SCHEDULES</div>
 </div>
 
 <div id="month-tabs-container" class="month-tabs"></div>
@@ -260,45 +239,69 @@ noscript {
 (function() {
   "use strict";
 
-  var STORAGE_KEY = "att_reg_2026_v2";
-  var MEMBERS = ["Monty", "Josh", "Fynn", "Gilby", "Callum", "Beth"];
-  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  var WEEKS = 5;
-  var DAYS = ["Wed", "Fri"];
-  var FIELDS = ["att", "paid"];
-
+  var STORAGE_KEY = "att_reg_2026_v3";
+  var MEMBERS = [
+    { name: "Monty",  days: [3, 5], labels: ["Wed", "Fri"] },
+    { name: "Josh",   days: [3, 5], labels: ["Wed", "Fri"] },
+    { name: "Fynn",   days: [3, 5], labels: ["Wed", "Fri"] },
+    { name: "Gilby",  days: [3, 5], labels: ["Wed", "Fri"] },
+    { name: "Callum", days: [3, 5], labels: ["Wed", "Fri"] },
+    { name: "Beth",   days: [2, 4], labels: ["Tue", "Thu"] }
+  ];
+  var MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var YEAR = 2026;
   var saveTimer = null;
   var state = {};
+  var calCache = {};
 
-  function initState() {
-    var s = {};
-    var mi, wi, di, fi, mem;
-    for (mi = 0; mi < MONTHS.length; mi++) {
-      for (mem = 0; mem < MEMBERS.length; mem++) {
-        for (wi = 0; wi < WEEKS; wi++) {
-          for (di = 0; di < DAYS.length; di++) {
-            for (fi = 0; fi < FIELDS.length; fi++) {
-              s[stateKey(mi, MEMBERS[mem], wi, di, fi)] = false;
-            }
-          }
+  function getMonthWeeks(monthIdx, dayA, dayB) {
+    var ck = monthIdx + "-" + dayA + "-" + dayB;
+    if (calCache[ck]) return calCache[ck];
+
+    var dim = new Date(YEAR, monthIdx + 1, 0).getDate();
+    var firstDow = new Date(YEAR, monthIdx, 1).getDay();
+    var buckets = {};
+    var d, dow, wk;
+
+    for (d = 1; d <= dim; d++) {
+      dow = new Date(YEAR, monthIdx, d).getDay();
+      if (dow === dayA || dow === dayB) {
+        wk = Math.floor((d + firstDow - 1) / 7);
+        if (!buckets[wk]) buckets[wk] = { a: null, b: null };
+        if (dow === dayA) {
+          buckets[wk].a = d;
+        } else {
+          buckets[wk].b = d;
         }
       }
     }
-    return s;
+
+    var keys = [];
+    var k;
+    for (k in buckets) {
+      if (buckets.hasOwnProperty(k)) keys.push(parseInt(k, 10));
+    }
+    keys.sort(function(x, y) { return x - y; });
+
+    var result = [];
+    for (var i = 0; i < keys.length; i++) {
+      result.push(buckets[keys[i]]);
+    }
+
+    calCache[ck] = result;
+    return result;
   }
 
-  function stateKey(monthIdx, memberName, weekIdx, dayIdx, fieldIdx) {
-    return monthIdx + "." + memberName + "." + weekIdx + "." + dayIdx + "." + fieldIdx;
+  function sk(mi, name, wi, slot, field) {
+    return mi + "." + name + "." + wi + "." + slot + "." + field;
   }
 
   function loadState() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") {
-          return parsed;
-        }
+        var p = JSON.parse(raw);
+        if (p && typeof p === "object") return p;
       }
     } catch (e) {}
     return null;
@@ -316,221 +319,202 @@ noscript {
     if (!el) return;
     el.className = "visible";
     if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(function() {
-      el.className = "";
-    }, 600);
+    saveTimer = setTimeout(function() { el.className = ""; }, 600);
+  }
+
+  function labelClass(memberName, slot) {
+    if (memberName === "Beth") {
+      return slot === "a" ? "day-label-tue" : "day-label-thu";
+    }
+    return slot === "a" ? "day-label-wed" : "day-label-fri";
   }
 
   function buildTabs() {
-    var container = document.getElementById("month-tabs-container");
-    if (!container) return;
-    var html = "";
-    var i;
-    for (i = 0; i < MONTHS.length; i++) {
-      html += '<button class="month-tab' + (i === 0 ? " active" : "") + '" data-month="' + i + '">' + MONTHS[i] + '<\/button>';
+    var c = document.getElementById("month-tabs-container");
+    if (!c) return;
+    var h = "";
+    for (var i = 0; i < 12; i++) {
+      h += '<button class="month-tab' + (i === 0 ? " active" : "") + '" data-month="' + i + '">' + MONTH_NAMES[i] + '</button>';
     }
-    container.innerHTML = html;
+    c.innerHTML = h;
   }
 
   function buildPanels() {
-    var container = document.getElementById("panels-container");
-    if (!container) return;
-    var html = "";
-    var mi, mem, wi, di;
+    var c = document.getElementById("panels-container");
+    if (!c) return;
+    var h = "";
+    var mi, mem, wi;
 
-    for (mi = 0; mi < MONTHS.length; mi++) {
-      html += '<div class="month-panel' + (mi === 0 ? " active" : "") + '" data-month="' + mi + '">';
+    for (mi = 0; mi < 12; mi++) {
+      h += '<div class="month-panel' + (mi === 0 ? " active" : "") + '" data-month="' + mi + '">';
 
       for (mem = 0; mem < MEMBERS.length; mem++) {
-        var memberName = MEMBERS[mem];
-        var attTotalId = "total-att-" + mi + "-" + mem;
-        var paidTotalId = "total-paid-" + mi + "-" + mem;
+        var m = MEMBERS[mem];
+        var weeks = getMonthWeeks(mi, m.days[0], m.days[1]);
+        var totalSlots = 0;
 
-        html += '<div class="member-card">';
-        html += '<div class="card-header">';
-        html += '<span class="member-name">' + memberName + '<\/span>';
-        html += '<div class="totals">';
-        html += '<span class="total-att" id="' + attTotalId + '">&#10003; 0/10<\/span>';
-        html += '<span class="total-paid" id="' + paidTotalId + '">&pound; 0/10<\/span>';
-        html += '<\/div>';
-        html += '<\/div>';
+        for (wi = 0; wi < weeks.length; wi++) {
+          if (weeks[wi].a !== null) totalSlots++;
+          if (weeks[wi].b !== null) totalSlots++;
+        }
 
-        html += '<div class="weeks-grid">';
-        for (wi = 0; wi < WEEKS; wi++) {
-          html += '<div class="week-col">';
-          html += '<div class="week-label">W' + (wi + 1) + '<\/div>';
+        var aid = "ta-" + mi + "-" + mem;
+        var pid = "tp-" + mi + "-" + mem;
+        var tagText = m.labels[0] + " / " + m.labels[1];
 
-          for (di = 0; di < DAYS.length; di++) {
-            var dayClass = di === 0 ? "day-label-wed" : "day-label-fri";
-            var attKey = stateKey(mi, memberName, wi, di, 0);
-            var paidKey = stateKey(mi, memberName, wi, di, 1);
+        h += '<div class="member-card">';
+        h += '<div class="card-header">';
+        h += '<span class="member-name">' + m.name;
+        h += '<span class="member-days-tag">' + tagText + '</span>';
+        h += '</span>';
+        h += '<div class="totals">';
+        h += '<span class="total-att" id="' + aid + '">&#10003; 0/' + totalSlots + '</span>';
+        h += '<span class="total-paid" id="' + pid + '">&pound; 0/' + totalSlots + '</span>';
+        h += '</div></div>';
 
-            html += '<div class="day-row">';
-            html += '<span class="day-label ' + dayClass + '">' + DAYS[di] + '<\/span>';
-            html += '<button class="tog" id="btn-' + paidKey + '" data-key="' + paidKey + '" data-type="paid" aria-label="Paid">&pound;<\/button>';
-            html += '<button class="tog" id="btn-' + attKey + '" data-key="' + attKey + '" data-type="att" aria-label="Attended">&#10003;<\/button>';
-            html += '<\/div>';
+        h += '<div class="weeks-scroll"><div class="weeks-grid">';
+
+        for (wi = 0; wi < weeks.length; wi++) {
+          var wk = weeks[wi];
+          h += '<div class="week-col">';
+          h += '<div class="week-label">W' + (wi + 1) + '</div>';
+
+          if (wk.a !== null) {
+            var ka1 = sk(mi, m.name, wi, "a", "att");
+            var ka2 = sk(mi, m.name, wi, "a", "paid");
+            state[ka1] = state[ka1] || false;
+            state[ka2] = state[ka2] || false;
+            h += '<div class="day-row">';
+            h += '<span class="day-label ' + labelClass(m.name, "a") + '">' + m.labels[0] + ' ' + wk.a + '</span>';
+            h += '<button class="tog" id="btn-' + ka2 + '" data-key="' + ka2 + '" data-type="paid">&pound;</button>';
+            h += '<button class="tog" id="btn-' + ka1 + '" data-key="' + ka1 + '" data-type="att">&#10003;</button>';
+            h += '</div>';
           }
 
-          html += '<\/div>';
-        }
-        html += '<\/div>';
+          if (wk.b !== null) {
+            var kb1 = sk(mi, m.name, wi, "b", "att");
+            var kb2 = sk(mi, m.name, wi, "b", "paid");
+            state[kb1] = state[kb1] || false;
+            state[kb2] = state[kb2] || false;
+            h += '<div class="day-row">';
+            h += '<span class="day-label ' + labelClass(m.name, "b") + '">' + m.labels[1] + ' ' + wk.b + '</span>';
+            h += '<button class="tog" id="btn-' + kb2 + '" data-key="' + kb2 + '" data-type="paid">&pound;</button>';
+            h += '<button class="tog" id="btn-' + kb1 + '" data-key="' + kb1 + '" data-type="att">&#10003;</button>';
+            h += '</div>';
+          }
 
-        html += '<\/div>';
+          h += '</div>';
+        }
+
+        h += '</div></div></div>';
       }
 
-      html += '<\/div>';
+      h += '</div>';
     }
 
-    container.innerHTML = html;
+    c.innerHTML = h;
   }
 
   function applyStateToDOM() {
     var key;
     for (key in state) {
-      if (state.hasOwnProperty(key)) {
-        if (state[key]) {
-          var btn = document.getElementById("btn-" + key);
-          if (btn) {
-            var type = btn.getAttribute("data-type");
-            if (type === "att") {
-              btn.className = "tog att-on";
-            } else if (type === "paid") {
-              btn.className = "tog paid-on";
-            }
-          }
+      if (state.hasOwnProperty(key) && state[key]) {
+        var btn = document.getElementById("btn-" + key);
+        if (btn) {
+          var t = btn.getAttribute("data-type");
+          btn.className = t === "att" ? "tog att-on" : "tog paid-on";
         }
       }
     }
   }
 
   function updateAllTotals() {
-    var mi, mem;
-    for (mi = 0; mi < MONTHS.length; mi++) {
-      for (mem = 0; mem < MEMBERS.length; mem++) {
+    for (var mi = 0; mi < 12; mi++) {
+      for (var mem = 0; mem < MEMBERS.length; mem++) {
         updateTotals(mi, mem);
       }
     }
   }
 
-  function updateTotals(monthIdx, memberIdx) {
-    var memberName = MEMBERS[memberIdx];
-    var attCount = 0;
-    var paidCount = 0;
-    var wi, di;
+  function updateTotals(mi, memIdx) {
+    var m = MEMBERS[memIdx];
+    var weeks = getMonthWeeks(mi, m.days[0], m.days[1]);
+    var ac = 0, pc = 0, ts = 0;
 
-    for (wi = 0; wi < WEEKS; wi++) {
-      for (di = 0; di < DAYS.length; di++) {
-        if (state[stateKey(monthIdx, memberName, wi, di, 0)]) {
-          attCount++;
-        }
-        if (state[stateKey(monthIdx, memberName, wi, di, 1)]) {
-          paidCount++;
-        }
+    for (var wi = 0; wi < weeks.length; wi++) {
+      var wk = weeks[wi];
+      if (wk.a !== null) {
+        ts++;
+        if (state[sk(mi, m.name, wi, "a", "att")]) ac++;
+        if (state[sk(mi, m.name, wi, "a", "paid")]) pc++;
+      }
+      if (wk.b !== null) {
+        ts++;
+        if (state[sk(mi, m.name, wi, "b", "att")]) ac++;
+        if (state[sk(mi, m.name, wi, "b", "paid")]) pc++;
       }
     }
 
-    var attEl = document.getElementById("total-att-" + monthIdx + "-" + memberIdx);
-    var paidEl = document.getElementById("total-paid-" + monthIdx + "-" + memberIdx);
-
-    if (attEl) {
-      attEl.innerHTML = "&#10003; " + attCount + "/10";
-    }
-    if (paidEl) {
-      paidEl.innerHTML = "&pound; " + paidCount + "/10";
-    }
+    var ae = document.getElementById("ta-" + mi + "-" + memIdx);
+    var pe = document.getElementById("tp-" + mi + "-" + memIdx);
+    if (ae) ae.innerHTML = "&#10003; " + ac + "/" + ts;
+    if (pe) pe.innerHTML = "&pound; " + pc + "/" + ts;
   }
 
   function handleTabClick(e) {
     var target = e.target;
     if (!target || !target.classList.contains("month-tab")) return;
-
-    var monthIdx = target.getAttribute("data-month");
-
-    var allTabs = document.querySelectorAll(".month-tab");
-    var allPanels = document.querySelectorAll(".month-panel");
-    var i;
-
-    for (i = 0; i < allTabs.length; i++) {
-      allTabs[i].className = "month-tab";
-    }
+    var idx = target.getAttribute("data-month");
+    var tabs = document.querySelectorAll(".month-tab");
+    var panels = document.querySelectorAll(".month-panel");
+    for (var i = 0; i < tabs.length; i++) tabs[i].className = "month-tab";
     target.className = "month-tab active";
-
-    for (i = 0; i < allPanels.length; i++) {
-      if (allPanels[i].getAttribute("data-month") === monthIdx) {
-        allPanels[i].className = "month-panel active";
-      } else {
-        allPanels[i].className = "month-panel";
-      }
+    for (var j = 0; j < panels.length; j++) {
+      panels[j].className = panels[j].getAttribute("data-month") === idx ? "month-panel active" : "month-panel";
     }
   }
 
   function handleToggleClick(e) {
     var target = e.target;
     if (!target || !target.classList.contains("tog")) return;
-
     var key = target.getAttribute("data-key");
     var type = target.getAttribute("data-type");
     if (!key || !type) return;
 
-    var isOn = !!state[key];
-    state[key] = !isOn;
-
-    if (!isOn) {
-      if (type === "att") {
-        target.className = "tog att-on";
-      } else {
-        target.className = "tog paid-on";
-      }
+    state[key] = !state[key];
+    if (state[key]) {
+      target.className = type === "att" ? "tog att-on" : "tog paid-on";
     } else {
       target.className = "tog";
     }
 
     var parts = key.split(".");
-    var monthIdx = parseInt(parts[0], 10);
-    var memberName = parts[1];
-    var memberIdx = -1;
-    var m;
-    for (m = 0; m < MEMBERS.length; m++) {
-      if (MEMBERS[m] === memberName) {
-        memberIdx = m;
-        break;
-      }
+    var mi = parseInt(parts[0], 10);
+    var name = parts[1];
+    for (var i = 0; i < MEMBERS.length; i++) {
+      if (MEMBERS[i].name === name) { updateTotals(mi, i); break; }
     }
-    if (memberIdx >= 0) {
-      updateTotals(monthIdx, memberIdx);
-    }
-
     saveState();
   }
 
   function init() {
-    state = initState();
-
     var saved = loadState();
+    buildTabs();
+    buildPanels();
     if (saved) {
-      var k;
-      for (k in saved) {
+      for (var k in saved) {
         if (saved.hasOwnProperty(k) && state.hasOwnProperty(k)) {
           state[k] = saved[k];
         }
       }
     }
-
-    buildTabs();
-    buildPanels();
     applyStateToDOM();
     updateAllTotals();
 
-    var tabContainer = document.getElementById("month-tabs-container");
-    if (tabContainer) {
-      tabContainer.addEventListener("click", handleTabClick, false);
-    }
-
-    var panelsContainer = document.getElementById("panels-container");
-    if (panelsContainer) {
-      panelsContainer.addEventListener("click", handleToggleClick, false);
-    }
+    var tc = document.getElementById("month-tabs-container");
+    if (tc) tc.addEventListener("click", handleTabClick, false);
+    var pc = document.getElementById("panels-container");
+    if (pc) pc.addEventListener("click", handleToggleClick, false);
   }
 
   if (document.readyState === "loading") {
@@ -538,7 +522,6 @@ noscript {
   } else {
     init();
   }
-
 })();
 </script>
 
